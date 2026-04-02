@@ -1,0 +1,14 @@
+# Binaries
+s3proxy4gcs
+s3proxy4gcs_test_bin
+scratch/
+integration_tests/s3proxy4gcs_test_bin
+
+# Configuration
+.env
+
+# Go workspace
+/vendor/
+
+# OS Specific
+.DS_Store

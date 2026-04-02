@@ -1,0 +1,64 @@
+package config
+
+import (
+	"log"
+	"os"
+	"strconv"
+
+	"github.com/joho/godotenv"
+)
+
+// Settings contains all the configuration for the proxy
+type Settings struct {
+	Port                string
+	GCPProjectID        string
+	TargetBucket        string
+	StorageBaseURL      string // For testing or custom setups
+	GCSPrefix           string // Subfolder prefix for testing or namespacing
+	DryRun              bool   // DryRun mode disables real GCS API hits
+	DebugLogging        bool   // DebugLogging enables verbose output
+	MaxIdleConns        int
+	MaxIdleConnsPerHost int
+	ProxyAccessKey      string // For re-signing
+	ProxySecretKey      string // For re-signing
+	JSONKey             string // Path to GCS Service Account JSON key
+}
+
+var Config *Settings
+
+// LoadConfig initialize the settings from a .env file or environment variables
+func LoadConfig() {
+	// Load from .env if it exists
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, reading from environment variables directly.")
+	}
+
+	dryRunStr := getEnv("DRY_RUN", "true") // Default to true if not set (Safe for laptop testing)
+	dryRun := dryRunStr == "true"
+	debugLogging := getEnv("DEBUG_LOGGING", "false") == "true"
+
+	maxIdleConns, _ := strconv.Atoi(getEnv("MAX_IDLE_CONNS", "1000"))
+	maxIdleConnsPerHost, _ := strconv.Atoi(getEnv("MAX_IDLE_CONNS_PER_HOST", "1000"))
+
+	Config = &Settings{
+		Port:                getEnv("PORT", "8080"),
+		GCPProjectID:        getEnv("GCP_PROJECT_ID", ""),
+		TargetBucket:        getEnv("TARGET_BUCKET", ""),
+		StorageBaseURL:      getEnv("STORAGE_BASE_URL", "https://storage.googleapis.com"),
+		GCSPrefix:           getEnv("GCS_PREFIX", ""),
+		DryRun:              dryRun,
+		DebugLogging:        debugLogging,
+		MaxIdleConns:        maxIdleConns,
+		MaxIdleConnsPerHost: maxIdleConnsPerHost,
+		ProxyAccessKey:      getEnv("PROXY_AWS_ACCESS_KEY_ID", getEnv("AWS_ACCESS_KEY_ID", "")),
+		ProxySecretKey:      getEnv("PROXY_AWS_SECRET_ACCESS_KEY", getEnv("AWS_SECRET_ACCESS_KEY", "")),
+		JSONKey:             getEnv("JSON_KEY", ""),
+	}
+}
+
+func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
+}
