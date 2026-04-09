@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
@@ -184,6 +185,14 @@ func main() {
 	reverseProxy.ModifyResponse = func(resp *http.Response) error {
 		if config.Config.DebugLogging {
 			slog.Debug("Response Headers received from GCS", "headers", resp.Header)
+		}
+
+		// Read and log XML response if requested for version interop
+		if strings.Contains(resp.Request.URL.RawQuery, "versions") {
+			if bodyBytes, err := io.ReadAll(resp.Body); err == nil {
+				slog.Debug("XML Response Body for ListObjectVersions", "xml", string(bodyBytes))
+				resp.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+			}
 		}
 
 		// 3. Versioning Interop (Ingress)

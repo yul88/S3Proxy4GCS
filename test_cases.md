@@ -14,6 +14,7 @@ These features pass through the proxy transparently to GCS. The proxy preserves 
 -   **`HeadObject`**
 -   **`DeleteObject`**
 -   **`ListObjectsV2`**
+-   **`DeleteObjects`** (Multi-Object Delete)
 
 ### 2. Multipart Uploads
 -   **`CreateMultipartUpload`**
@@ -62,14 +63,11 @@ These features are intercepted by the proxy to translate between AWS XML and GCS
 
 These features are known failures or formally deferred due to performance or architectural limitations.
 
-### 10. Multi-Object Delete
--   **`DeleteObjects`** (Fan-out not supported natively in GCS S3 API, deferred).
-
-### 11. Flexible Checksums (aws-chunked)
+### 10. Flexible Checksums (aws-chunked)
 -   **`aws-chunked` trailers for checksums** (Deferred to client workarounds: `AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED`).
 
-### 12. Upload Part Copy
+### 11. Upload Part Copy
 -   **`UploadPartCopy`** cross-object multipart copies (GCS S3 API limitation).
 
-### 13. Restore Object
+### 12. Restore Object
 -   **`RestoreObject`** (GCS considers archive objects "live", no restore required).

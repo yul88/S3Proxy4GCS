@@ -17,6 +17,7 @@ The goal is to serve as a transparent middleware for S3 protocols to translate u
 7.  **Context Propagation**: Always use the request's context (`r.Context()`) for outbound GCS API calls (e.g. `bucket.Update()`). If the client aborts, the outbound GCS call automatically cancels to save compute/cost.
 8.  **Standard S3 Errors**: Use the `writeS3Error` helper to respond with standard AWS S3 XML error formats. Do not use plain text `http.Error` as SDK clients expect XML.
 9.  **Structured JSON Logging**: When logging, use standard Go 1.21's `log/slog` module instead of standard `log.Printf`. Use semantic levels (`Info`, `Error`, `Debug`) and use keyword arguments (e.g., `slog.Info("msg", "key", val)`) to ensure parsed compatibility with Cloud Logging.
+10. **Multi-Object Delete Support**: Bulk deletion via `DeleteObjects` (`POST /?delete`) is natively supported by GCS's XML API. The proxy automatically strips non-compliant client headers (e.g., `Accept-Encoding: identity`), re-signs the request using HMAC v4, and forwards the payload directly to GCS to process bulk deletes without requiring custom fan-out translation logic.
 
 ## Environment Layout
 

@@ -34,10 +34,10 @@ Choosing between a GLB Extension and a Cloud Run proxy depends on whether the fe
 - **Transparent Tag Translation**: Rewriting standard S3 `x-amz-tagging` upload headers into GCS custom metadata `x-goog-meta-s3tag-` instantly.
 
 **🟡 Difficult for GLB Extensions (Requires Body Translation & Re-signing)**
+- **DeleteObjects (Multi-Object Delete)**: Fully supported by passing the HMAC v4 re-signed payload directly to GCS's native XML API, requiring no heavy custom fan-out translation in the proxy.
 - **XML Parsing (Lifecycle, CORS, Logging)**: Modifying the XML body invalidates the original AWS v4 signature. Generating a new GCP HMAC signature within a load balancer extension is heavily resource-intensive and risks hitting execution timeouts. Best routed to a dedicated Cloud Run instance.
 
 **🔴 Unsuitable for GLB Extensions (Stateful/Orchestration)**
-- **DeleteObjects (Fan-out)**: Cannot fan-out single requests into up to 1,000 separate GCS API calls and aggregate responses.
 - **S3 `?tagging` API**: The read-modify-write cycle (GET metadata -> merge -> PUT) is too slow for load balancer inline validation.
 - **Upload Part Copy**: Exceeds memory/streaming limits due to required buffering.
 
@@ -71,15 +71,15 @@ These features intercept high-frequency data path operations or require heavy ba
 **Proxy Impact**: Extreme Latency / Infeasible on Data Path for tag-based ABAC.
 **Recommendation**: Shift to prefix-based security rather than object-level tags.
 
-#### 3. DeleteObjects (Multi-Object Delete) - **[Deferred]**
-**Issue**: GCS S3-compatible API does not support bulk `DeleteObjects`.
-**Proxy Impact**: Resource Exhaustion (Fan-out). Requires concurrent GCS delete calls in proxy.
+#### 3. DeleteObjects (Multi-Object Delete) - **[Implemented]**
+**Issue**: Originally thought to require heavy fan-out logic.
+**Implementation**: Natively supported via standard GCS XML API compatibility layer. The proxy strips non-compliant headers, signs using HMAC v4, and forwards the S3 XML delete payload transparently to GCS.
 
-#### 5. Inventory Data Manifests - **[Deferred]**
+#### 4. Inventory Data Manifests - **[Deferred]**
 **Issue**: Automations expect specific S3 Inventory output formats.
 **Proxy Impact**: Requires External Stateful ETL Worker.
 
-#### 6. Flexible Checksums (aws-chunked unwrapping) - **[Deferred]**
+#### 5. Flexible Checksums (aws-chunked unwrapping) - **[Deferred]**
 **Issue**: Modern SDKs use `aws-chunked` framing for checksum trailers, unsupported by GCS.
 **Proxy Impact**: Extreme Memory/Bandwidth Overhead. Unwrapping requires heavy stream parsing and may limit high-speed transparent data-plane throughput.
 **Recommendation**: Use client-side `AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED` or use standard `Content-MD5` headers for integrity.
