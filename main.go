@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -26,6 +27,7 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"google.golang.org/api/option"
 	"s3proxy4gcs/config"
+	"s3proxy4gcs/pkg/reqlog"
 	"s3proxy4gcs/pkg/translate"
 )
 
@@ -37,6 +39,18 @@ var gcsURL *url.URL
 func main() {
 	// Initialize configuration
 	config.LoadConfig()
+
+	// Initialize request data logger (SOH-delimited CSV via ymlog)
+	if config.Config.ReqLogEnabled {
+		reqlog.Init(
+			config.Config.ReqLogPath,
+			config.Config.ReqLogMaxSizeMB,
+			config.Config.ReqLogMaxBackup,
+			config.Config.ReqLogChanBuf,
+		)
+		logDir := filepath.Dir(strings.ReplaceAll(config.Config.ReqLogPath, "%Y%M%D", "placeholder"))
+		reqlog.StartCleanup(logDir, config.Config.ReqLogKeepDays)
+	}
 
 	// Initialize Structured JSON Logger (slog)
 	var level slog.Level = slog.LevelInfo
@@ -206,6 +220,10 @@ func main() {
 	r := chi.NewRouter()
 
 	// Base middlewares
+	r.Use(middleware.RequestID)
+	if config.Config.ReqLogEnabled {
+		r.Use(reqlog.Middleware(reqlog.Default))
+	}
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
