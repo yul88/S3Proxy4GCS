@@ -155,3 +155,8 @@ Handles bi-directional translation between AWS S3 XML schemas and Google Cloud S
 - **[logging](file:///Users/deckardy/gitlab/s3proxy4gcs/pkg/translate/gcs_logging.go)**: Parses and holds bucket logging specifications.
 - **[website](file:///Users/deckardy/gitlab/s3proxy4gcs/pkg/translate/gcs_website.go)**: Maps main page suffixes and 404 error documents.
 - **[tagging](file:///Users/deckardy/gitlab/s3proxy4gcs/pkg/translate/gcs_tagging.go)**: Translates tags into GCS custom metadata using Optimistic Concurrency Control (OCC) to prevent overwrite losses.
+
+## Demo
+This is just a propertyp. 
+For the production ready demo, please refer to [this repo](https://github.com/Nctllnty/S3Proxy4GCS)
+
